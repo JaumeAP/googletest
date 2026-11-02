@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-26]
+        no_exceptions_rtti: [OFF, ON]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_CXX_STANDARD=17
+          -Dgtest_build_samples=ON
+          -Dgtest_build_tests=ON
+          -Dgmock_build_tests=ON
+          -Dcxx_no_exception=${{ matrix.no_exceptions_rtti }}
+          -Dcxx_no_rtti=${{ matrix.no_exceptions_rtti }}
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --parallel --output-on-failure
